@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Strata Performance Management System - Complete MVP</title>
+  <title>Strata PMS – Employee View &amp; Workflow</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
     .container { max-width: 1100px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
@@ -25,6 +25,7 @@
     .sig-box.signed { border-style: solid; border-color: #16a34a; background: #f0fdf4; }
     .audit-log { background: #0f172a; color: #38bdf8; font-family: monospace; padding: 12px; border-radius: 6px; font-size: 12px; max-height: 150px; overflow-y: auto; }
     .alert-box { padding: 12px; border-radius: 6px; margin-top: 15px; font-weight: 600; font-size: 13px; }
+    .tab-inactive { background: #e2e8f0; color: #1e293b; }
   </style>
 </head>
 <body>
@@ -33,6 +34,45 @@
   <h1>Strata Performance Management System MVP</h1>
   <p><strong>Status:</strong> Complete Architecture Demonstration | <strong>Policy Compliance:</strong> 100%</p>
 
+  <!-- VIEW TABS -->
+  <div style="display:flex; gap:8px; margin-bottom:20px;">
+    <button id="tabEmployee" onclick="showView('employee')">Employee View</button>
+    <button id="tabWorkflow" class="tab-inactive" onclick="showView('workflow')">Full Workflow</button>
+  </div>
+
+  <!-- EMPLOYEE VIEW: GOAL CASCADE & PROFILE (READ-ONLY) -->
+  <div id="employeeView">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:250px;">
+          <h2 style="margin-top:0;">My Goals &amp; Profile</h2>
+          <p style="font-size:12px; color:#475569; background:#f1f5f9; padding:8px; border-radius:4px;">
+            🔒 <strong>View only:</strong> Company, practice and team goals are set by leadership and cannot be edited here.<br>
+            💡 Sample data – will connect to the API later.
+          </p>
+        </div>
+        <div id="profilePanel" style="min-width:200px; max-width:100%; box-sizing:border-box; padding:12px; background:#ffffff; border-radius:6px; border:1px solid #cbd5e1; font-size:13px; line-height:1.8;">
+          <strong>👤 <span id="profName"></span></strong><br>
+          <strong>Role:</strong> <span id="profRole" style="color:#2563eb;"></span><br>
+          <strong>Job Title:</strong> <span id="profTitle"></span><br>
+          <strong>Email:</strong> <span id="profEmail"></span><br>
+          <strong>Line Manager:</strong> <span id="profLM" style="color:#059669;"></span>
+        </div>
+      </div>
+
+      <h3>Level 1 · Company Goals</h3>
+      <table><thead><tr><th style="width:130px;">Code</th><th>Goal</th><th style="width:130px;">Linked To</th></tr></thead><tbody id="goalsCompany"></tbody></table>
+
+      <h3>Level 2 · Practice Goals</h3>
+      <table><thead><tr><th style="width:130px;">Code</th><th>Goal</th><th style="width:130px;">Linked To</th></tr></thead><tbody id="goalsPractice"></tbody></table>
+
+      <h3>Level 3 · Team Goals</h3>
+      <table><thead><tr><th style="width:130px;">Code</th><th>Goal</th><th style="width:130px;">Linked To</th></tr></thead><tbody id="goalsTeam"></tbody></table>
+    </div>
+  </div>
+
+  <!-- FULL WORKFLOW VIEW (EXISTING DEMO) -->
+  <div id="workflowView" style="display:none;">
   <!-- CONTROLS: DYNAMIC ORG CHART SELECTOR -->
   <div class="card" style="background:#e0f2fe; border-color:#38bdf8;">
     <h3>🛠️ Strata Org Hierarchy Selector (Full Team Data Loaded)</h3>
@@ -199,6 +239,7 @@
       [SYSTEM INIT] Audit Logging Active. Timestamp: 2026-09-23T08:25:36Z<br>
     </div>
   </div>
+  </div>
 </div>
 
 <script>
@@ -219,6 +260,62 @@
     "Aisha Hussaini": { role: "Manager", lm: "Hilary Daudu", om: "Hilary Daudu" },
     "Hilary Daudu": { role: "Managing Partner", lm: "Self", om: "Self" }
   };
+
+  // Employee View sample data (placeholder until a goals/profile API exists)
+  const employeeProfile = {
+    name: "Tobi",
+    role: strataOrg["Tobi"].role,
+    jobTitle: "Product Manager",
+    email: "tobi@example.com",
+    lineManager: strataOrg["Tobi"].lm
+  };
+
+  const goalCascade = {
+    company: [
+      { code: "STR-2026-01", title: "Scale NIBSS NPS Integration across 200+ Institutions", parent: "—" },
+      { code: "OPS-2026-04", title: "Maintain 99.9% API Reliability & Security Compliance", parent: "—" }
+    ],
+    practice: [
+      { code: "PRA-2026-01", title: "Payments Advisory: Onboard 30 new financial institution clients onto NPS", parent: "STR-2026-01" },
+      { code: "PRA-2026-02", title: "Technology Advisory: Achieve zero critical security findings in client audits", parent: "OPS-2026-04" }
+    ],
+    team: [
+      { code: "TM-2026-01", title: "Product Team: Launch the Performance Management System MVP by Q4", parent: "PRA-2026-01" },
+      { code: "TM-2026-02", title: "Product Team: Cut client integration turnaround to 10 working days", parent: "PRA-2026-02" }
+    ]
+  };
+
+  function renderGoalTable(tbodyId, goals) {
+    const tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = '';
+    goals.forEach(goal => {
+      const row = tbody.insertRow();
+      [goal.code, goal.title, goal.parent].forEach(text => {
+        row.insertCell().textContent = text;
+      });
+    });
+  }
+
+  function renderEmployeeView() {
+    document.getElementById('profName').textContent = employeeProfile.name;
+    document.getElementById('profRole').textContent = employeeProfile.role;
+    document.getElementById('profTitle').textContent = employeeProfile.jobTitle;
+    document.getElementById('profEmail').textContent = employeeProfile.email;
+    document.getElementById('profLM').textContent = employeeProfile.lineManager;
+
+    renderGoalTable('goalsCompany', goalCascade.company);
+    renderGoalTable('goalsPractice', goalCascade.practice);
+    renderGoalTable('goalsTeam', goalCascade.team);
+  }
+
+  function showView(view) {
+    const isEmployee = view === 'employee';
+    document.getElementById('employeeView').style.display = isEmployee ? 'block' : 'none';
+    document.getElementById('workflowView').style.display = isEmployee ? 'none' : 'block';
+    document.getElementById('tabEmployee').classList.toggle('tab-inactive', !isEmployee);
+    document.getElementById('tabWorkflow').classList.toggle('tab-inactive', isEmployee);
+    logAudit('VIEW_CHANGED', isEmployee ? 'Employee View' : 'Full Workflow');
+  }
 
   function logAudit(event, details) {
     const container = document.getElementById('auditLogContainer');
@@ -330,6 +427,7 @@
 
   // Run on page load
   window.onload = function() {
+    renderEmployeeView();
     updateEmployeeHierarchy();
     calculateScorecard();
   };
